@@ -1,0 +1,206 @@
+using UnityEngine;
+using System.Collections.Generic;
+
+public class CustomerSpawner : MonoBehaviour
+{
+    [Header("Spawning Settings")]
+    public GameObject customerPrefab;           // Customer 3D model
+    public Transform spawnPoint;                // Where customers spawn (door)
+    public Transform counterPoint;              // Where customers wait
+    public int maxCustomersPerDay = 10;         // Total customers for the day
+    public float minSpawnInterval = 15f;        // Minimum time between customers
+    public float maxSpawnInterval = 30f;        // Maximum time between customers
+    public int maxSimultaneousCustomers = 3;    // Max customers at once
+    
+    [Header("Day Progression")]
+    public int currentDay = 1;                  // Increases difficulty
+    
+    private List<GameObject> activeCustomers = new List<GameObject>();
+    private int customersSpawned = 0;
+    private int customersServed = 0;
+    private float nextSpawnTime = 0f;
+    private bool dayActive = false;
+    
+    void Start()
+    {
+        StartNewDay();
+    }
+    
+    void Update()
+    {
+        if (!dayActive) return;
+        
+        // Check if it's time to spawn next customer
+        if (Time.time >= nextSpawnTime && CanSpawnCustomer())
+        {
+            SpawnCustomer();
+            ScheduleNextSpawn();
+        }
+        
+        // Check if day is complete
+        if (customersServed >= maxCustomersPerDay)
+        {
+            EndDay();
+        }
+    }
+    
+    // Start a new day of customers
+    public void StartNewDay()
+    {
+        dayActive = true;
+        customersSpawned = 0;
+        customersServed = 0;
+        
+        // Adjust difficulty based on day
+        AdjustDifficulty();
+        
+        // Schedule first customer
+        nextSpawnTime = Time.time + Random.Range(2f, 5f); // First customer comes quickly
+        
+        Debug.Log($"Day {currentDay} started! {maxCustomersPerDay} customers expected.");
+    }
+    
+    // Spawn a new customer
+    void SpawnCustomer()
+    {
+        if (customerPrefab == null || spawnPoint == null)
+        {
+            Debug.LogError("CustomerSpawner: Missing prefab or spawn point!");
+            return;
+        }
+        
+        // Instantiate customer at door
+        GameObject customer = Instantiate(customerPrefab, spawnPoint.position, spawnPoint.rotation);
+        
+        // Set up customer movement
+        CustomerMovement movement = customer.GetComponent<CustomerMovement>();
+        if (movement != null)
+        {
+            movement.SetDestination(counterPoint.position);
+            movement.onReachedCounter += OnCustomerReachedCounter;
+            movement.onCustomerLeft += OnCustomerLeft;
+        }
+        
+        activeCustomers.Add(customer);
+        customersSpawned++;
+        
+        Debug.Log($"Customer #{customersSpawned} spawned!");
+    }
+    
+    // Schedule when next customer spawns
+    void ScheduleNextSpawn()
+    {
+        float spawnDelay = Random.Range(minSpawnInterval, maxSpawnInterval);
+        nextSpawnTime = Time.time + spawnDelay;
+    }
+    
+    // Check if we can spawn another customer
+    bool CanSpawnCustomer()
+    {
+        // Don't exceed daily limit
+        if (customersSpawned >= maxCustomersPerDay)
+            return false;
+        
+        // Don't exceed simultaneous limit
+        if (activeCustomers.Count >= maxSimultaneousCustomers)
+            return false;
+        
+        return true;
+    }
+    
+    // Called when customer reaches the counter
+    void OnCustomerReachedCounter(GameObject customer)
+    {
+        Debug.Log("Customer reached counter and placed order!");
+        
+        // Generate their order
+        OrderTicketSystem orderSystem = FindObjectOfType<OrderTicketSystem>();
+        if (orderSystem != null)
+        {
+            orderSystem.GenerateNewOrder();
+        }
+    }
+    
+    // Called when customer leaves the restaurant
+    void OnCustomerLeft(GameObject customer)
+    {
+        activeCustomers.Remove(customer);
+        customersServed++;
+        
+        Debug.Log($"Customer left! ({customersServed}/{maxCustomersPerDay} served)");
+        
+        // Destroy customer object
+        Destroy(customer);
+    }
+    
+    // Adjust difficulty based on current day
+    void AdjustDifficulty()
+    {
+        if (currentDay <= 3)
+        {
+            // Week 1: Tutorial days
+            maxCustomersPerDay = 5 + currentDay;
+            maxSimultaneousCustomers = 2;
+            minSpawnInterval = 20f;
+            maxSpawnInterval = 40f;
+        }
+        else if (currentDay <= 7)
+        {
+            // Week 2: Normal difficulty
+            maxCustomersPerDay = 8 + (currentDay - 3);
+            maxSimultaneousCustomers = 3;
+            minSpawnInterval = 15f;
+            maxSpawnInterval = 30f;
+        }
+        else
+        {
+            // Week 3+: Hard difficulty
+            maxCustomersPerDay = 12 + (currentDay - 7);
+            maxSimultaneousCustomers = 4;
+            minSpawnInterval = 10f;
+            maxSpawnInterval = 25f;
+        }
+    }
+    
+    // End the current day
+    void EndDay()
+    {
+        dayActive = false;
+        Debug.Log($"Day {currentDay} complete! All customers served.");
+        
+        // Trigger end-of-day sequence
+        // This will be handled by DayManager in the future
+    }
+    
+    // Public method to force customer to leave (if order failed/timeout)
+    public void RemoveCustomer(GameObject customer)
+    {
+        if (activeCustomers.Contains(customer))
+        {
+            CustomerMovement movement = customer.GetComponent<CustomerMovement>();
+            if (movement != null)
+            {
+                movement.LeaveRestaurant();
+            }
+        }
+    }
+    
+    // Get count of active customers
+    public int GetActiveCustomerCount()
+    {
+        return activeCustomers.Count;
+    }
+    
+    // Get customers served so far
+    public int GetCustomersServed()
+    {
+        return customersServed;
+    }
+    
+    // Advance to next day
+    public void NextDay()
+    {
+        currentDay++;
+        StartNewDay();
+    }
+}
