@@ -1,0 +1,155 @@
+using UnityEngine;
+
+public class PattyCooking : MonoBehaviour
+{
+    // Patty cooking states
+    public enum CookingState
+    {
+        Raw,
+        Cooking,
+        Cooked,
+        Burnt
+    }
+
+    [Header("Cooking Settings")]
+    public float cookTime = 5f;          // Time to cook one side perfectly
+    public float burnTime = 8f;          // Time until patty burns
+    public CookingState currentState = CookingState.Raw;
+    
+    [Header("Visual Feedback")]
+    public Material rawMaterial;
+    public Material cookingMaterial;
+    public Material cookedMaterial;
+    public Material burntMaterial;
+    
+    private float cookingTimer = 0f;
+    private bool isOnGrill = false;
+    private bool isFlipped = false;
+    private Renderer pattyRenderer;
+    
+    void Start()
+    {
+        pattyRenderer = GetComponent<Renderer>();
+        UpdatePattyVisual();
+    }
+    
+    void Update()
+    {
+        if (isOnGrill)
+        {
+            CookPatty();
+        }
+    }
+    
+    // Call this when patty is placed on grill
+    public void StartCooking()
+    {
+        isOnGrill = true;
+        currentState = CookingState.Cooking;
+        Debug.Log("Patty placed on grill - cooking started!");
+    }
+    
+    // Call this when patty is removed from grill
+    public void StopCooking()
+    {
+        isOnGrill = false;
+        Debug.Log($"Patty removed from grill. Final state: {currentState}");
+    }
+    
+    void CookPatty()
+    {
+        cookingTimer += Time.deltaTime;
+        
+        // Check if patty is perfectly cooked
+        if (cookingTimer >= cookTime && cookingTimer < burnTime && currentState == CookingState.Cooking)
+        {
+            currentState = CookingState.Cooked;
+            UpdatePattyVisual();
+            Debug.Log("Patty is perfectly cooked!");
+        }
+        // Check if patty is burnt
+        else if (cookingTimer >= burnTime)
+        {
+            currentState = CookingState.Burnt;
+            UpdatePattyVisual();
+            Debug.Log("Patty is burnt!");
+        }
+    }
+    
+    // Player flips the patty
+    public void FlipPatty()
+    {
+        if (!isOnGrill)
+        {
+            Debug.Log("Cannot flip patty - not on grill!");
+            return;
+        }
+        
+        if (isFlipped)
+        {
+            Debug.Log("Patty already flipped!");
+            return;
+        }
+        
+        isFlipped = true;
+        cookingTimer = 0f; // Reset timer for second side
+        currentState = CookingState.Cooking;
+        
+        // Visual flip animation (rotate patty)
+        transform.Rotate(180f, 0f, 0f);
+        
+        Debug.Log("Patty flipped!");
+    }
+    
+    void UpdatePattyVisual()
+    {
+        if (pattyRenderer == null) return;
+        
+        switch (currentState)
+        {
+            case CookingState.Raw:
+                pattyRenderer.material = rawMaterial;
+                break;
+            case CookingState.Cooking:
+                pattyRenderer.material = cookingMaterial;
+                break;
+            case CookingState.Cooked:
+                pattyRenderer.material = cookedMaterial;
+                break;
+            case CookingState.Burnt:
+                pattyRenderer.material = burntMaterial;
+                break;
+        }
+    }
+    
+    // Check if patty is ready to be used in burger
+    public bool IsPattyUsable()
+    {
+        return currentState == CookingState.Cooked;
+    }
+    
+    // Get quality for tip calculation (100 = perfect, 0 = burnt)
+    public int GetPattyQuality()
+    {
+        switch (currentState)
+        {
+            case CookingState.Cooked:
+                return 100;
+            case CookingState.Cooking:
+                return 50;
+            case CookingState.Raw:
+                return 25;
+            case CookingState.Burnt:
+                return 0;
+            default:
+                return 0;
+        }
+    }
+    
+    // Display cooking progress (for UI)
+    public float GetCookingProgress()
+    {
+        if (!isOnGrill) return 0f;
+        return Mathf.Clamp01(cookingTimer / cookTime);
+    }
+}
