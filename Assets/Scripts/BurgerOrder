@@ -1,0 +1,252 @@
+using UnityEngine;
+using UnityEngine.UI;
+using System.Collections.Generic;
+
+// Define what a burger order looks like
+[System.Serializable]
+public class BurgerOrder
+{
+    public string customerName;
+    public List<string> ingredients; // Bottom to top: bun, patty, cheese, lettuce, tomato, top bun
+    public float timeLimit;
+    public int basePayment;
+    
+    public BurgerOrder(string name, List<string> ingredientList, float time, int payment)
+    {
+        customerName = name;
+        ingredients = ingredientList;
+        timeLimit = time;
+        basePayment = payment;
+    }
+}
+
+public class OrderTicketSystem : MonoBehaviour
+{
+    [Header("UI References")]
+    public GameObject ticketPanel;           // The popup panel
+    public Text customerNameText;            // Shows customer name
+    public Transform ingredientListParent;   // Where ingredient icons appear
+    public GameObject ingredientIconPrefab;  // Prefab for each ingredient icon
+    public Text timerText;                   // Countdown timer
+    public Text paymentText;                 // Shows potential earnings
+    
+    [Header("Ticket Display")]
+    public Vector3 ticketPosition = new Vector3(100, -100, 0); // Screen position
+    
+    private BurgerOrder currentOrder;
+    private float orderTimer;
+    private bool orderActive = false;
+    
+    void Start()
+    {
+        // Hide ticket at start
+        if (ticketPanel != null)
+            ticketPanel.SetActive(false);
+    }
+    
+    void Update()
+    {
+        if (orderActive)
+        {
+            UpdateOrderTimer();
+        }
+    }
+    
+    // Generate a random order
+    public void GenerateNewOrder()
+    {
+        string[] possibleNames = { "Alice", "Bob", "Charlie", "Dana", "Eve", "Frank" };
+        string randomName = possibleNames[Random.Range(0, possibleNames.Length)];
+        
+        // Create random burger order
+        List<string> ingredients = new List<string>();
+        ingredients.Add("Bottom Bun");
+        ingredients.Add("Patty");
+        
+        // Random toppings
+        if (Random.value > 0.3f) ingredients.Add("Cheese");
+        if (Random.value > 0.4f) ingredients.Add("Lettuce");
+        if (Random.value > 0.4f) ingredients.Add("Tomato");
+        if (Random.value > 0.5f) ingredients.Add("Pickles");
+        if (Random.value > 0.6f) ingredients.Add("Onions");
+        
+        ingredients.Add("Top Bun");
+        
+        float timeLimit = Random.Range(45f, 90f);
+        int payment = 10 + (ingredients.Count * 2);
+        
+        currentOrder = new BurgerOrder(randomName, ingredients, timeLimit, payment);
+        DisplayOrder();
+    }
+    
+    // Show the order ticket on screen
+    void DisplayOrder()
+    {
+        if (ticketPanel == null) return;
+        
+        ticketPanel.SetActive(true);
+        orderActive = true;
+        orderTimer = currentOrder.timeLimit;
+        
+        // Display customer name
+        if (customerNameText != null)
+            customerNameText.text = "Order for: " + currentOrder.customerName;
+        
+        // Display payment
+        if (paymentText != null)
+            paymentText.text = "$" + currentOrder.basePayment;
+        
+        // Clear previous ingredients
+        foreach (Transform child in ingredientListParent)
+        {
+            Destroy(child.gameObject);
+        }
+        
+        // Display ingredients from bottom to top
+        for (int i = 0; i < currentOrder.ingredients.Count; i++)
+        {
+            GameObject icon = Instantiate(ingredientIconPrefab, ingredientListParent);
+            
+            // Set ingredient text
+            Text iconText = icon.GetComponentInChildren<Text>();
+            if (iconText != null)
+                iconText.text = currentOrder.ingredients[i];
+            
+            // Optional: Add ingredient icon images here based on ingredient type
+            Image iconImage = icon.GetComponent<Image>();
+            if (iconImage != null)
+                iconImage.color = GetIngredientColor(currentOrder.ingredients[i]);
+        }
+        
+        Debug.Log($"New order from {currentOrder.customerName}!");
+    }
+    
+    // Update countdown timer
+    void UpdateOrderTimer()
+    {
+        orderTimer -= Time.deltaTime;
+        
+        if (timerText != null)
+        {
+            int minutes = Mathf.FloorToInt(orderTimer / 60);
+            int seconds = Mathf.FloorToInt(orderTimer % 60);
+            timerText.text = string.Format("Time: {0:00}:{1:00}", minutes, seconds);
+            
+            // Change color if running out of time
+            if (orderTimer < 15f)
+                timerText.color = Color.red;
+            else if (orderTimer < 30f)
+                timerText.color = Color.yellow;
+            else
+                timerText.color = Color.white;
+        }
+        
+        // Order expired
+        if (orderTimer <= 0)
+        {
+            OrderFailed();
+        }
+    }
+    
+    // Called when player completes and submits the burger
+    public void SubmitOrder(List<string> playerBurger)
+    {
+        if (!orderActive) return;
+        
+        int accuracy = CalculateAccuracy(playerBurger);
+        int tips = CalculateTips(accuracy);
+        int totalEarnings = currentOrder.basePayment + tips;
+        
+        Debug.Log($"Order completed! Accuracy: {accuracy}% | Earned: ${totalEarnings}");
+        
+        CompleteOrder(totalEarnings, accuracy);
+    }
+    
+    // Calculate how accurate the burger is (0-100%)
+    int CalculateAccuracy(List<string> playerBurger)
+    {
+        if (playerBurger.Count != currentOrder.ingredients.Count)
+            return 50; // Wrong number of ingredients
+        
+        int correctIngredients = 0;
+        for (int i = 0; i < currentOrder.ingredients.Count; i++)
+        {
+            if (i < playerBurger.Count && playerBurger[i] == currentOrder.ingredients[i])
+                correctIngredients++;
+        }
+        
+        return (correctIngredients * 100) / currentOrder.ingredients.Count;
+    }
+    
+    // Calculate tips based on accuracy
+    int CalculateTips(int accuracy)
+    {
+        if (accuracy >= 100) return 10;      // Perfect order
+        if (accuracy >= 80) return 5;        // Good order
+        if (accuracy >= 60) return 2;        // Okay order
+        return 0;                             // Poor order
+    }
+    
+    // Order completed successfully
+    void CompleteOrder(int earnings, int accuracy)
+    {
+        orderActive = false;
+        
+        // You can trigger a completion UI here
+        Debug.Log($"Customer satisfied! Rating: {accuracy}%");
+        
+        // Hide ticket after short delay
+        Invoke("HideTicket", 2f);
+    }
+    
+    // Order failed (time ran out)
+    void OrderFailed()
+    {
+        orderActive = false;
+        Debug.Log($"{currentOrder.customerName}'s order expired! Lost customer!");
+        
+        Invoke("HideTicket", 2f);
+    }
+    
+    void HideTicket()
+    {
+        if (ticketPanel != null)
+            ticketPanel.SetActive(false);
+    }
+    
+    // Helper function to color-code ingredients
+    Color GetIngredientColor(string ingredient)
+    {
+        switch (ingredient.ToLower())
+        {
+            case "bottom bun":
+            case "top bun":
+                return new Color(0.9f, 0.7f, 0.4f); // Tan
+            case "patty":
+                return new Color(0.4f, 0.2f, 0.1f); // Brown
+            case "cheese":
+                return new Color(1f, 0.9f, 0.3f);   // Yellow
+            case "lettuce":
+                return new Color(0.3f, 0.8f, 0.3f); // Green
+            case "tomato":
+                return new Color(0.9f, 0.2f, 0.2f); // Red
+            case "pickles":
+                return new Color(0.4f, 0.7f, 0.3f); // Dark green
+            case "onions":
+                return new Color(0.9f, 0.9f, 0.9f); // White
+            default:
+                return Color.white;
+        }
+    }
+    
+    // Public getter for current order (for player to reference)
+    public BurgerOrder GetCurrentOrder()
+    {
+        return currentOrder;
+    }
+    
+    public bool IsOrderActive()
+    {
+        return orderActive;
+    }
+}
