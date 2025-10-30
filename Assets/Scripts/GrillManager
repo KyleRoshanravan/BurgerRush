@@ -1,0 +1,331 @@
+using UnityEngine;
+using System.Collections.Generic;
+
+public class GrillManager : MonoBehaviour
+{
+    [Header("Grill Setup")]
+    public Transform[] grillSpots;              // Array of grill positions (4-6 spots)
+    public GameObject rawPattyPrefab;           // Raw patty model
+    public Transform pattyStorageArea;          // Where raw patties are stored
+    
+    [Header("Visual Effects")]
+    public GameObject sizzleParticlePrefab;     // Steam/smoke particle effect
+    public Material grillHotMaterial;           // Grill material when hot
+    public Material grillColdMaterial;          // Grill material when cold
+    
+    [Header("Audio")]
+    public AudioSource grillAudioSource;
+    public AudioClip sizzleSound;               // Cooking sound loop
+    public AudioClip placePattySound;           // Sound when placing patty
+    public AudioClip flipPattySound;            // Sound when flipping patty
+    
+    [Header("Settings")]
+    public int maxPatties = 6;                  // Maximum patties at once
+    public bool grillIsHot = true;              // Is grill ready to cook
+    
+    private Dictionary<Transform, GameObject> activePatties = new Dictionary<Transform, GameObject>();
+    private List<GameObject> sizzleEffects = new List<GameObject>();
+    private Renderer grillRenderer;
+    
+    void Start()
+    {
+        grillRenderer = GetComponent<Renderer>();
+        UpdateGrillVisual();
+        
+        // Validate grill spots
+        if (grillSpots == null || grillSpots.Length == 0)
+        {
+            Debug.LogError("GrillManager: No grill spots assigned!");
+        }
+        
+        Debug.Log($"Grill ready with {grillSpots.Length} cooking spots");
+    }
+    
+    void Update()
+    {
+        // Update sizzle sound volume based on active patties
+        UpdateSizzleSound();
+    }
+    
+    // Place a raw patty on the grill
+    public bool PlacePattyOnGrill(Transform grillSpot)
+    {
+        // Check if spot is valid
+        if (!IsValidGrillSpot(grillSpot))
+        {
+            Debug.Log("Invalid grill spot!");
+            return false;
+        }
+        
+        // Check if spot is occupied
+        if (IsSpotOccupied(grillSpot))
+        {
+            Debug.Log("Grill spot already occupied!");
+            return false;
+        }
+        
+        // Check if grill is full
+        if (activePatties.Count >= maxPatties)
+        {
+            Debug.Log("Grill is full!");
+            return false;
+        }
+        
+        // Check if grill is hot
+        if (!grillIsHot)
+        {
+            Debug.Log("Grill is not hot yet!");
+            return false;
+        }
+        
+        // Create patty at grill spot
+        GameObject patty = Instantiate(rawPattyPrefab, grillSpot.position, grillSpot.rotation);
+        
+        // Start cooking
+        PattyCooking pattyCooking = patty.GetComponent<PattyCooking>();
+        if (pattyCooking != null)
+        {
+            pattyCooking.StartCooking();
+        }
+        
+        // Add to active patties
+        activePatties[grillSpot] = patty;
+        
+        // Spawn sizzle particle effect
+        SpawnSizzleEffect(grillSpot.position);
+        
+        // Play sound
+        if (grillAudioSource != null && placePattySound != null)
+        {
+            grillAudioSource.PlayOneShot(placePattySound);
+        }
+        
+        Debug.Log($"Patty placed on grill! ({activePatties.Count}/{maxPatties} spots used)");
+        return true;
+    }
+    
+    // Remove patty from grill (pickup)
+    public GameObject RemovePattyFromGrill(Transform grillSpot)
+    {
+        if (!activePatties.ContainsKey(grillSpot))
+        {
+            Debug.Log("No patty at this spot!");
+            return null;
+        }
+        
+        GameObject patty = activePatties[grillSpot];
+        
+        // Stop cooking
+        PattyCooking pattyCooking = patty.GetComponent<PattyCooking>();
+        if (pattyCooking != null)
+        {
+            pattyCooking.StopCooking();
+        }
+        
+        // Remove from grill
+        activePatties.Remove(grillSpot);
+        
+        // Remove sizzle effect for this spot
+        RemoveSizzleEffect(grillSpot.position);
+        
+        Debug.Log($"Patty removed from grill! ({activePatties.Count}/{maxPatties} spots used)");
+        
+        return patty;
+    }
+    
+    // Flip a patty on the grill
+    public bool FlipPatty(Transform grillSpot)
+    {
+        if (!activePatties.ContainsKey(grillSpot))
+        {
+            Debug.Log("No patty to flip at this spot!");
+            return false;
+        }
+        
+        GameObject patty = activePatties[grillSpot];
+        PattyCooking pattyCooking = patty.GetComponent<PattyCooking>();
+        
+        if (pattyCooking != null)
+        {
+            pattyCooking.FlipPatty();
+            
+            // Play flip sound
+            if (grillAudioSource != null && flipPattySound != null)
+            {
+                grillAudioSource.PlayOneShot(flipPattySound);
+            }
+            
+            return true;
+        }
+        
+        return false;
+    }
+    
+    // Find nearest empty grill spot to a position
+    public Transform GetNearestEmptySpot(Vector3 position)
+    {
+        Transform nearestSpot = null;
+        float nearestDistance = Mathf.Infinity;
+        
+        foreach (Transform spot in grillSpots)
+        {
+            if (!IsSpotOccupied(spot))
+            {
+                float distance = Vector3.Distance(position, spot.position);
+                if (distance < nearestDistance)
+                {
+                    nearestDistance = distance;
+                    nearestSpot = spot;
+                }
+            }
+        }
+        
+        return nearestSpot;
+    }
+    
+    // Check if a grill spot is occupied
+    public bool IsSpotOccupied(Transform grillSpot)
+    {
+        return activePatties.ContainsKey(grillSpot);
+    }
+    
+    // Check if this is a valid grill spot
+    bool IsValidGrillSpot(Transform spot)
+    {
+        foreach (Transform grillSpot in grillSpots)
+        {
+            if (grillSpot == spot)
+                return true;
+        }
+        return false;
+    }
+    
+    // Spawn sizzle particle effect
+    void SpawnSizzleEffect(Vector3 position)
+    {
+        if (sizzleParticlePrefab != null)
+        {
+            GameObject effect = Instantiate(sizzleParticlePrefab, position + Vector3.up * 0.1f, Quaternion.identity);
+            effect.transform.SetParent(transform);
+            sizzleEffects.Add(effect);
+        }
+    }
+    
+    // Remove sizzle effect near a position
+    void RemoveSizzleEffect(Vector3 position)
+    {
+        for (int i = sizzleEffects.Count - 1; i >= 0; i--)
+        {
+            if (sizzleEffects[i] != null && Vector3.Distance(sizzleEffects[i].transform.position, position) < 0.5f)
+            {
+                Destroy(sizzleEffects[i]);
+                sizzleEffects.RemoveAt(i);
+                return;
+            }
+        }
+    }
+    
+    // Update sizzle sound based on active patties
+    void UpdateSizzleSound()
+    {
+        if (grillAudioSource != null && sizzleSound != null)
+        {
+            if (activePatties.Count > 0)
+            {
+                // Play sizzle sound if not already playing
+                if (!grillAudioSource.isPlaying)
+                {
+                    grillAudioSource.clip = sizzleSound;
+                    grillAudioSource.loop = true;
+                    grillAudioSource.Play();
+                }
+                
+                // Adjust volume based on number of patties
+                grillAudioSource.volume = Mathf.Clamp01(activePatties.Count / (float)maxPatties);
+            }
+            else
+            {
+                // Stop sizzle sound if no patties
+                if (grillAudioSource.isPlaying)
+                {
+                    grillAudioSource.Stop();
+                }
+            }
+        }
+    }
+    
+    // Update grill visual (hot/cold)
+    void UpdateGrillVisual()
+    {
+        if (grillRenderer != null)
+        {
+            grillRenderer.material = grillIsHot ? grillHotMaterial : grillColdMaterial;
+        }
+    }
+    
+    // Heat up the grill
+    public void HeatGrill()
+    {
+        grillIsHot = true;
+        UpdateGrillVisual();
+        Debug.Log("Grill is now hot!");
+    }
+    
+    // Cool down the grill
+    public void CoolGrill()
+    {
+        grillIsHot = false;
+        UpdateGrillVisual();
+        Debug.Log("Grill cooled down");
+    }
+    
+    // Get patty at specific spot
+    public GameObject GetPattyAtSpot(Transform grillSpot)
+    {
+        if (activePatties.ContainsKey(grillSpot))
+        {
+            return activePatties[grillSpot];
+        }
+        return null;
+    }
+    
+    // Get number of active patties
+    public int GetActivePattyCount()
+    {
+        return activePatties.Count;
+    }
+    
+    // Check if grill has space
+    public bool HasSpace()
+    {
+        return activePatties.Count < maxPatties;
+    }
+    
+    // Get all patties currently cooking
+    public List<GameObject> GetAllPatties()
+    {
+        return new List<GameObject>(activePatties.Values);
+    }
+    
+    // Clear all patties (for cleanup/day end)
+    public void ClearAllPatties()
+    {
+        foreach (GameObject patty in activePatties.Values)
+        {
+            if (patty != null)
+                Destroy(patty);
+        }
+        
+        activePatties.Clear();
+        
+        foreach (GameObject effect in sizzleEffects)
+        {
+            if (effect != null)
+                Destroy(effect);
+        }
+        
+        sizzleEffects.Clear();
+        
+        Debug.Log("Grill cleared!");
+    }
+}
