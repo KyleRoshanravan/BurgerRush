@@ -3,14 +3,15 @@ using UnityEngine.SceneManagement;
 
 public class MainMenuController : MonoBehaviour
 {
-    public GameObject playButton;   // Reference to the Play Button
-    public float delayBeforeShow = 3f; // Time before button appears
+    public GameObject playButton;
+    public Animator titleAnimator;
+    public float delayBeforeShow = 3f;
 
     void Start()
     {
-        // Hide button initially
         playButton.SetActive(false);
-        // Call the function after a delay
+        if (titleAnimator != null)
+            titleAnimator.SetTrigger("Play");
         Invoke(nameof(ShowPlayButton), delayBeforeShow);
     }
 
@@ -21,7 +22,11 @@ public class MainMenuController : MonoBehaviour
 
     public void PlayGame()
     {
-        // Load your main game scene (make sure it's added to Build Settings)
         SceneManager.LoadScene("GameScene");
+    }
+
+    public void QuitGame()
+    {
+        Application.Quit();
     }
 }
