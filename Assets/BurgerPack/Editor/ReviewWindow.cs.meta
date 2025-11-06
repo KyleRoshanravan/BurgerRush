@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 10bec36508d128944bb2432e688af25f
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 282306
+  packageName: FREE Cartoon Burger Pack
+  packageVersion: 1.0
+  assetPath: Assets/Pack_FREE_Burger/Editor/ReviewWindow.cs
+  uploadId: 757311
