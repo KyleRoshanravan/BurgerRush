@@ -15,24 +15,24 @@ public class PattyCooking : MonoBehaviour
     public float cookTime = 5f;          // Time to cook one side perfectly
     public float burnTime = 8f;          // Time until patty burns
     public CookingState currentState = CookingState.Raw;
-    
+
     [Header("Visual Feedback")]
     public Material rawMaterial;
     public Material cookingMaterial;
     public Material cookedMaterial;
     public Material burntMaterial;
-    
+
     private float cookingTimer = 0f;
     private bool isOnGrill = false;
     private bool isFlipped = false;
     private Renderer pattyRenderer;
-    
+
     void Start()
     {
         pattyRenderer = GetComponent<Renderer>();
         UpdatePattyVisual();
     }
-    
+
     void Update()
     {
         if (isOnGrill)
@@ -40,7 +40,7 @@ public class PattyCooking : MonoBehaviour
             CookPatty();
         }
     }
-    
+
     // Call this when patty is placed on grill
     public void StartCooking()
     {
@@ -48,18 +48,18 @@ public class PattyCooking : MonoBehaviour
         currentState = CookingState.Cooking;
         Debug.Log("Patty placed on grill - cooking started!");
     }
-    
+
     // Call this when patty is removed from grill
     public void StopCooking()
     {
         isOnGrill = false;
         Debug.Log($"Patty removed from grill. Final state: {currentState}");
     }
-    
+
     void CookPatty()
     {
         cookingTimer += Time.deltaTime;
-        
+
         // Check if patty is perfectly cooked
         if (cookingTimer >= cookTime && cookingTimer < burnTime && currentState == CookingState.Cooking)
         {
@@ -75,7 +75,7 @@ public class PattyCooking : MonoBehaviour
             Debug.Log("Patty is burnt!");
         }
     }
-    
+
     // Player flips the patty
     public void FlipPatty()
     {
@@ -84,27 +84,27 @@ public class PattyCooking : MonoBehaviour
             Debug.Log("Cannot flip patty - not on grill!");
             return;
         }
-        
+
         if (isFlipped)
         {
             Debug.Log("Patty already flipped!");
             return;
         }
-        
+
         isFlipped = true;
         cookingTimer = 0f; // Reset timer for second side
         currentState = CookingState.Cooking;
-        
+
         // Visual flip animation (rotate patty)
         transform.Rotate(180f, 0f, 0f);
-        
+
         Debug.Log("Patty flipped!");
     }
-    
+
     void UpdatePattyVisual()
     {
         if (pattyRenderer == null) return;
-        
+
         switch (currentState)
         {
             case CookingState.Raw:
@@ -121,13 +121,13 @@ public class PattyCooking : MonoBehaviour
                 break;
         }
     }
-    
+
     // Check if patty is ready to be used in burger
     public bool IsPattyUsable()
     {
         return currentState == CookingState.Cooked;
     }
-    
+
     // Get quality for tip calculation (100 = perfect, 0 = burnt)
     public int GetPattyQuality()
     {
@@ -145,7 +145,7 @@ public class PattyCooking : MonoBehaviour
                 return 0;
         }
     }
-    
+
     // Display cooking progress (for UI)
     public float GetCookingProgress()
     {
