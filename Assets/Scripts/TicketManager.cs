@@ -1,35 +1,85 @@
-using System.Collections.Generic;
 using UnityEngine;
+using System.Collections;
+using System.Collections.Generic;
 
 public class TicketManager : MonoBehaviour
 {
-    public GameObject ticketPrefab;        // Prefab of a single ticket
-    public Transform ticketPanelParent;    // Parent container (TicketPanel)
+    [Header("Prefabs & References")]
+    public GameObject ticketPrefab;           // Ticket prefab
+    public Transform ticketParent;            // UI container for tickets
+    public List<GameObject> extraIngredients; // Ingredients that are optional/extras
+    public GameObject topBunPrefab;
+    public GameObject bottomBunPrefab;
+    public GameObject pattyPrefab;
 
-    private List<TicketUI> activeTickets = new List<TicketUI>();
+    [Header("Ticket Settings")]
+    public int paymentAmount = 25;
+    public float ticketSpawnInterval = 10f;  // Seconds between tickets
+    public int minExtraIngredients = 0;
+    public int maxExtraIngredients = 3;
 
-    public void CreateNewTicket(string customerName, List<Sprite> ingredientIcons, float timeLimit, int payment)
+    [Header("Customer Names")]
+    public List<string> customerNames = new List<string>() { "John", "Mary", "Bob", "Alice", "Tom", "Sue" };
+
+    private void Start()
     {
-        GameObject newTicketObj = Instantiate(ticketPrefab, ticketPanelParent);
-        TicketUI ticketUI = newTicketObj.GetComponent<TicketUI>();
+        StartCoroutine(SpawnTicketsRoutine());
+    }
 
-        if (ticketUI != null)
+    private IEnumerator SpawnTicketsRoutine()
+    {
+        while (true)
         {
-            ticketUI.SetupTicket(customerName, ingredientIcons, timeLimit, payment);
-            activeTickets.Add(ticketUI);
+            SpawnTicket();
+            yield return new WaitForSeconds(ticketSpawnInterval);
         }
     }
 
-    void Update()
+    public void SpawnTicket()
     {
-        // Remove completed/expired tickets automatically
-        for (int i = activeTickets.Count - 1; i >= 0; i--)
+        // Random customer name
+        string customerName = customerNames[Random.Range(0, customerNames.Count)];
+
+        // Order list with required ingredients
+        List<GameObject> orderIngredients = new List<GameObject>
         {
-            if (activeTickets[i].IsExpired)
-            {
-                Destroy(activeTickets[i].gameObject);
-                activeTickets.RemoveAt(i);
-            }
+            bottomBunPrefab,
+            pattyPrefab,
+            topBunPrefab
+        };
+
+        // Random extra ingredients inserted between bottom bun and patty
+        int extraCount = Random.Range(minExtraIngredients, maxExtraIngredients + 1);
+        for (int i = 0; i < extraCount; i++)
+        {
+            GameObject extra = extraIngredients[Random.Range(0, extraIngredients.Count)];
+            orderIngredients.Insert(1, extra);
         }
+
+        // Spawn ticket prefab
+        GameObject ticketGO = Instantiate(ticketPrefab, ticketParent);
+        TicketUI ticketUI = ticketGO.GetComponent<TicketUI>();
+        ticketUI.SetupTicket(customerName, orderIngredients, 60f, paymentAmount);
+
+        // Handle expiration
+        StartCoroutine(HandleTicketExpiration(ticketUI));
+    }
+
+    private IEnumerator HandleTicketExpiration(TicketUI ticket)
+    {
+        while (ticket != null && !ticket.isExpired)
+            yield return null;
+
+        if (ticket != null)
+        {
+            MoneyManager.Instance.LoseMoney(paymentAmount);
+            Destroy(ticket.gameObject);
+        }
+    }
+
+    public void CompleteOrder(TicketUI ticket)
+    {
+        MoneyManager.Instance.AddMoney(paymentAmount);
+        Destroy(ticket.gameObject);
     }
 }

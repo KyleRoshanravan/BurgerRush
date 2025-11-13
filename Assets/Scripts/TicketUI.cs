@@ -1,53 +1,69 @@
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 using TMPro;
+using UnityEngine.UI;
+using System.Collections.Generic;
 
 public class TicketUI : MonoBehaviour
 {
-    [Header("UI References")]
     public TextMeshProUGUI customerNameText;
     public TextMeshProUGUI timerText;
     public Transform ingredientListParent;
-    public GameObject ingredientIconPrefab;
     public TextMeshProUGUI paymentText;
 
-    private float remainingTime;
-    private bool timerActive = false;
+    public Vector2 iconSize = new Vector2(50, 50);
 
-    public bool IsExpired => remainingTime <= 0f;
+    public float timeRemaining;
+    public bool isExpired { get; private set; } = false;
 
-    public void SetupTicket(string customerName, List<Sprite> ingredientIcons, float timeLimit, int payment)
+    public void SetupTicket(string customerName, List<GameObject> ingredientPrefabs, float timeLimit, int payment)
     {
         customerNameText.text = customerName;
         paymentText.text = "$" + payment;
-        remainingTime = timeLimit;
-        timerActive = true;
+        timeRemaining = timeLimit;
+        isExpired = false;
 
-        // Clear any existing icons
-        foreach (Transform child in ingredientListParent)
-            Destroy(child.gameObject);
+        // Clear previous icons
+        foreach (Transform t in ingredientListParent)
+            Destroy(t.gameObject);
 
-        // Spawn icons bottom-to-top
-        foreach (Sprite icon in ingredientIcons)
+        // Spawn an icon for each ingredient
+        foreach (var prefab in ingredientPrefabs)
         {
-            GameObject newIcon = Instantiate(ingredientIconPrefab, ingredientListParent);
-            newIcon.GetComponent<Image>().sprite = icon;
+            Sprite sprite = null;
+
+            var sr = prefab.GetComponent<SpriteRenderer>();
+            if (sr != null) sprite = sr.sprite;
+            var img = prefab.GetComponent<Image>();
+            if (img != null) sprite = img.sprite;
+
+            if (sprite == null)
+            {
+                Debug.LogWarning(prefab.name + " has no sprite!");
+                continue;
+            }
+
+            GameObject iconGO = new GameObject(prefab.name + "_Icon", typeof(RectTransform), typeof(Image));
+            iconGO.transform.SetParent(ingredientListParent, false);
+            Image iconImage = iconGO.GetComponent<Image>();
+            iconImage.sprite = sprite;
+            iconImage.preserveAspect = true;
+
+            RectTransform rt = iconGO.GetComponent<RectTransform>();
+            rt.sizeDelta = iconSize;
         }
     }
 
-    void Update()
+    private void Update()
     {
-        if (timerActive && remainingTime > 0)
-        {
-            remainingTime -= Time.deltaTime;
-            timerText.text = $"{remainingTime:F1}s";
+        if (isExpired) return;
 
-            if (remainingTime <= 0)
-            {
-                timerText.text = "Time's Up!";
-                timerActive = false;
-            }
+        timeRemaining -= Time.deltaTime;
+        timerText.text = Mathf.CeilToInt(timeRemaining) + "s";
+
+        if (timeRemaining <= 0f)
+        {
+            isExpired = true;
+            timerText.text = "0s";
         }
     }
 }
