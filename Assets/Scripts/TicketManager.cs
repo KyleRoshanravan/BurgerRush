@@ -5,17 +5,18 @@ using System.Collections.Generic;
 public class TicketManager : MonoBehaviour
 {
     [Header("Prefabs & References")]
-    public GameObject ticketPrefab;
-    public Transform ticketParent;
+    public GameObject ticketPrefab;      // Your Ticket UI prefab
+    public Transform ticketParent;       // Container for spawned tickets
 
+    [Header("Ingredient Prefabs")]
     public GameObject topBunPrefab;
     public GameObject bottomBunPrefab;
     public GameObject pattyPrefab;
-    public List<GameObject> extraIngredients;
+    public List<GameObject> extraIngredients; // lettuce, tomato, cheese, etc.
 
     [Header("Ticket Settings")]
     public int paymentAmount = 25;
-    public float ticketSpawnInterval = 10f; // seconds between tickets
+    public float ticketSpawnInterval = 5f;   // seconds between tickets
     public int minExtraIngredients = 0;
     public int maxExtraIngredients = 3;
 
@@ -24,6 +25,7 @@ public class TicketManager : MonoBehaviour
 
     private void Start()
     {
+        // Start spawning tickets repeatedly
         StartCoroutine(SpawnTicketsRoutine());
     }
 
@@ -38,10 +40,10 @@ public class TicketManager : MonoBehaviour
 
     public void SpawnTicket()
     {
-        // Random customer name
+        // Pick a random customer name
         string customerName = customerNames[Random.Range(0, customerNames.Count)];
 
-        // Build order list
+        // Build the ingredient list: mandatory + random extras
         List<GameObject> orderIngredients = new List<GameObject>
         {
             bottomBunPrefab,
@@ -53,22 +55,24 @@ public class TicketManager : MonoBehaviour
         for (int i = 0; i < extraCount; i++)
         {
             GameObject extra = extraIngredients[Random.Range(0, extraIngredients.Count)];
-            orderIngredients.Insert(1, extra); // insert between bottom bun and patty
+            orderIngredients.Insert(1, extra); // Insert between bottom bun and patty
         }
 
-        // Instantiate ticket
+        // Instantiate a new ticket
         GameObject ticketGO = Instantiate(ticketPrefab, ticketParent);
         TicketUI ticketUI = ticketGO.GetComponent<TicketUI>();
         ticketUI.SetupTicket(customerName, orderIngredients, 60f, paymentAmount);
 
-        // Handle expiration
+        // Start tracking expiration
         StartCoroutine(HandleTicketExpiration(ticketUI));
     }
 
     private IEnumerator HandleTicketExpiration(TicketUI ticket)
     {
         while (ticket != null && !ticket.isExpired)
+        {
             yield return null;
+        }
 
         if (ticket != null)
         {
@@ -77,6 +81,7 @@ public class TicketManager : MonoBehaviour
         }
     }
 
+    // Call this when the player serves the order correctly
     public void CompleteOrder(TicketUI ticket)
     {
         MoneyManager.Instance.AddMoney(paymentAmount);
