@@ -22,23 +22,20 @@ public class TicketUI : MonoBehaviour
         timeRemaining = timeLimit;
         isExpired = false;
 
-        // Clear previous icons
+        // Clear previous ingredient icons
         foreach (Transform t in ingredientListParent)
             Destroy(t.gameObject);
 
-        // Spawn an icon for each ingredient
+        // Spawn ingredient icons
         foreach (var prefab in ingredientPrefabs)
         {
             Sprite sprite = null;
-
-            var sr = prefab.GetComponent<SpriteRenderer>();
-            if (sr != null) sprite = sr.sprite;
-            var img = prefab.GetComponent<Image>();
-            if (img != null) sprite = img.sprite;
+            var iconComp = prefab.GetComponent<IngredientIcon>();
+            if (iconComp != null) sprite = iconComp.icon;
 
             if (sprite == null)
             {
-                Debug.LogWarning(prefab.name + " has no sprite!");
+                Debug.LogWarning(prefab.name + " has no icon assigned!");
                 continue;
             }
 
