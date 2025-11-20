@@ -5295,6 +5295,61 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 6956242403280161063, guid: b813d19c40ec4bc43890e91f97b087d3, type: 3}
   m_PrefabInstance: {fileID: 271098740}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &271808314
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 271808316}
+  - component: {fileID: 271808315}
+  m_Layer: 0
+  m_Name: CustomerSpawner
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &271808315
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 271808314}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b7331c0e9e6691349ab4666e50537c9d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CustomerSpawner
+  customerPrefabs:
+  - {fileID: 6252356961377389083, guid: 2db03e7c8a8135146b280e5da7e0289c, type: 3}
+  - {fileID: 7478225697116208144, guid: 6fb37f825ee63264b9c2600bf1a52006, type: 3}
+  - {fileID: 7447163605589988728, guid: 907fd825e3988774caab4234b943bf44, type: 3}
+  - {fileID: 8619338778009079851, guid: 47a3741b253f088469eedd6d403dd89a, type: 3}
+  spawnPoints:
+  - {fileID: 1175939637}
+  - {fileID: 732404914}
+  - {fileID: 1545935408}
+  - {fileID: 422939947}
+  spawnInterval: 10
+--- !u!4 &271808316
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 271808314}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -5.47856, y: 0.1, z: 5.85146}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!4 &272386584 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8522075622236389654, guid: dd6658866c1c65a4aa4a6c6e8e34e4f5, type: 3}
@@ -44822,3 +44877,4 @@ SceneRoots:
   - {fileID: 732404914}
   - {fileID: 1545935408}
   - {fileID: 422939947}
+  - {fileID: 271808316}
