@@ -21,17 +21,20 @@ public class PlateAssembler : MonoBehaviour
             rb.useGravity = false;
         }
 
-        // Calculate total stack height so far
+        // Calculate height of stack so far
         float currentHeight = 0f;
-
         foreach (var item in stackedIngredients)
             currentHeight += GetObjectHeight(item) + stackSpacing;
 
         // Position ingredient
-        ingredient.transform.position = plateCenter.position + new Vector3(0, currentHeight, 0);
+        ingredient.transform.position =
+            plateCenter.position + new Vector3(0, currentHeight, 0);
 
-        // Center rotation (optional)
+        // Reset rotation (optional)
         ingredient.transform.rotation = Quaternion.identity;
+
+        // **Make ingredient a child of the plate so it moves with it**
+        ingredient.transform.SetParent(transform);
 
         // Add to stack
         stackedIngredients.Add(ingredient);
@@ -40,7 +43,7 @@ public class PlateAssembler : MonoBehaviour
     private float GetObjectHeight(GameObject obj)
     {
         Renderer rend = obj.GetComponentInChildren<Renderer>();
-        if (rend == null) return 0.1f; // fallback
+        if (rend == null) return 0.1f; // fallback if no renderer found
         return rend.bounds.size.y;
     }
 }

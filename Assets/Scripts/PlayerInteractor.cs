@@ -129,6 +129,9 @@ public class PlayerInteractor : MonoBehaviour
     // ------------------------------------------------------------
     public void AutoPickUp(GameObject obj)
     {
+        // Detach from plate if needed
+        obj.transform.SetParent(null);
+
         heldObject = obj;
 
         Rigidbody rb = heldObject.GetComponent<Rigidbody>();
@@ -141,6 +144,9 @@ public class PlayerInteractor : MonoBehaviour
 
     void PickUpObject(GameObject obj)
     {
+        // Detach from plate if needed
+        obj.transform.SetParent(null);
+
         heldObject = obj;
 
         Rigidbody rb = heldObject.GetComponent<Rigidbody>();
