@@ -66,7 +66,6 @@ public class PlayerInteractor : MonoBehaviour
         PlateAssembler plate = obj.GetComponent<PlateAssembler>();
         IngredientBox box = obj.GetComponent<IngredientBox>();
 
-        // Crosshair only
         if (plate != null)
             crosshairImage.color = hoverPlateColor;
         else if (obj.CompareTag("Pickable"))
@@ -129,7 +128,11 @@ public class PlayerInteractor : MonoBehaviour
     // ------------------------------------------------------------
     public void AutoPickUp(GameObject obj)
     {
-        // Detach from plate if needed
+        // NEW — detach from plate if needed
+        PlateAssembler plate = obj.GetComponentInParent<PlateAssembler>();
+        if (plate != null)
+            plate.DetachIngredient(obj);
+
         obj.transform.SetParent(null);
 
         heldObject = obj;
@@ -144,7 +147,11 @@ public class PlayerInteractor : MonoBehaviour
 
     void PickUpObject(GameObject obj)
     {
-        // Detach from plate if needed
+        // NEW — detach from plate if needed
+        PlateAssembler plate = obj.GetComponentInParent<PlateAssembler>();
+        if (plate != null)
+            plate.DetachIngredient(obj);
+
         obj.transform.SetParent(null);
 
         heldObject = obj;
