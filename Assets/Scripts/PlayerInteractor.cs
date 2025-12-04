@@ -5,17 +5,16 @@ public class PlayerInteractor : MonoBehaviour
 {
     [Header("Interaction Settings")]
     public float interactRange = 3f;
-    public string interactTag = "Pickable"; // Tag for pickable objects
 
     [Header("Hold Settings")]
-    public Transform holdPoint; // Where held objects go
+    public Transform holdPoint;
     public float moveSpeed = 10f;
 
     [Header("Crosshair Settings")]
-    public Image crosshairImage; // Assign in Inspector
+    public Image crosshairImage;
     public Color normalColor = Color.white;
-    public Color hoverColor = Color.yellow;
-    public Color boxHoverColor = Color.green;
+    public Color hoverPickableColor = Color.yellow;
+    public Color hoverPlateColor = Color.cyan;
 
     private GameObject hoveredObject;
     private GameObject heldObject;
@@ -37,131 +36,132 @@ public class PlayerInteractor : MonoBehaviour
     }
 
     // ------------------------------------------------------------
-    // Hover detection
+    // HOVER DETECTION
     // ------------------------------------------------------------
     void HandleHover()
     {
-        if (heldObject != null)
-        {
-            if (hoveredObject != null)
-            {
-                OnHoverExit(hoveredObject);
-                hoveredObject = null;
-            }
-            UpdateCrosshair(false, false);
-            return;
-        }
-
         Ray ray = new Ray(Camera.main.transform.position, Camera.main.transform.forward);
 
         if (Physics.Raycast(ray, out RaycastHit hit, interactRange))
         {
             GameObject obj = hit.collider.gameObject;
-            bool isBox = obj.GetComponent<IngredientBox>() != null;
-            bool isPickable = obj.CompareTag(interactTag);
-
-            if (isBox || isPickable)
+            if (obj != hoveredObject)
             {
-                if (hoveredObject != obj)
-                {
-                    if (hoveredObject != null) OnHoverExit(hoveredObject);
-                    hoveredObject = obj;
-                    OnHoverEnter(hoveredObject, isBox);
-                }
-
-                UpdateCrosshair(true, isBox);
-                return;
+                OnHoverExit();
+                hoveredObject = obj;
+                OnHoverEnter(obj);
             }
+            return;
         }
 
-        // No hit
-        if (hoveredObject != null)
-        {
-            OnHoverExit(hoveredObject);
-            hoveredObject = null;
-        }
-        UpdateCrosshair(false, false);
+        OnHoverExit();
+        hoveredObject = null;
     }
 
-    void OnHoverEnter(GameObject obj, bool isBox)
+    void OnHoverEnter(GameObject obj)
     {
-        Renderer rend = obj.GetComponent<Renderer>();
-        if (rend != null)
-            rend.material.color = isBox ? boxHoverColor : hoverColor;
+        if (heldObject != null)
+            return;
 
-        Debug.Log($"Hovering over {(isBox ? "Ingredient Box" : "Pickable Object")}: {obj.name}");
+        PlateAssembler plate = obj.GetComponent<PlateAssembler>();
+        IngredientBox box = obj.GetComponent<IngredientBox>();
+
+        if (plate != null)
+            crosshairImage.color = hoverPlateColor;
+        else if (obj.CompareTag("Pickable"))
+            crosshairImage.color = hoverPickableColor;
+        else
+            crosshairImage.color = normalColor;
     }
 
-    void OnHoverExit(GameObject obj)
+    void OnHoverExit()
     {
-        Renderer rend = obj.GetComponent<Renderer>();
-        if (rend != null)
-            rend.material.color = Color.white;
+        crosshairImage.color = normalColor;
     }
 
     // ------------------------------------------------------------
-    // Pick up and drop logic
+    // CLICK HANDLING
     // ------------------------------------------------------------
     void HandleClick()
     {
-        if (Input.GetMouseButtonDown(0))
+        if (!Input.GetMouseButtonDown(0))
+            return;
+
+        // If holding an ingredient
+        if (heldObject != null)
         {
-            // If already holding, drop the object
-            if (heldObject != null)
+            if (hoveredObject != null)
             {
-                DropObject();
+                PlateAssembler plate = hoveredObject.GetComponent<PlateAssembler>();
+                if (plate != null)
+                {
+                    plate.PlaceIngredient(heldObject);
+                    heldObject = null;
+                    return;
+                }
+            }
+
+            DropObject();
+            return;
+        }
+
+        // If not holding — try IngredientBox
+        if (hoveredObject != null)
+        {
+            IngredientBox box = hoveredObject.GetComponent<IngredientBox>();
+            if (box != null)
+            {
+                box.OnInteract(this);
                 return;
             }
 
-            // Check if hitting an IngredientBox
-            if (hoveredObject != null)
+            // Otherwise pick up a pickable
+            if (hoveredObject.CompareTag("Pickable"))
             {
-                IngredientBox box = hoveredObject.GetComponent<IngredientBox>();
-                if (box != null)
-                {
-                    box.OnInteract(this);
-                    return;
-                }
-
-                // Otherwise, try to pick it up normally
                 PickUpObject(hoveredObject);
             }
         }
     }
 
+    // ------------------------------------------------------------
+    // PICKUP / DROP
+    // ------------------------------------------------------------
     public void AutoPickUp(GameObject obj)
     {
-        if (obj == null) return;
+        // NEW — detach from plate if needed
+        PlateAssembler plate = obj.GetComponentInParent<PlateAssembler>();
+        if (plate != null)
+            plate.DetachIngredient(obj);
+
+        obj.transform.SetParent(null);
 
         heldObject = obj;
+
         Rigidbody rb = heldObject.GetComponent<Rigidbody>();
         if (rb != null)
         {
             rb.useGravity = false;
             rb.isKinematic = true;
         }
-
-        hoveredObject = null;
-
-        Debug.Log($"Auto-picked up new object: {obj.name}");
     }
 
     void PickUpObject(GameObject obj)
     {
-        if (obj == null || obj == heldObject) return;
+        // NEW — detach from plate if needed
+        PlateAssembler plate = obj.GetComponentInParent<PlateAssembler>();
+        if (plate != null)
+            plate.DetachIngredient(obj);
+
+        obj.transform.SetParent(null);
 
         heldObject = obj;
+
         Rigidbody rb = heldObject.GetComponent<Rigidbody>();
         if (rb != null)
         {
             rb.useGravity = false;
             rb.isKinematic = true;
         }
-
-        OnHoverExit(obj);
-        hoveredObject = null;
-
-        Debug.Log($"Picked up object: {obj.name}");
     }
 
     void DropObject()
@@ -173,17 +173,13 @@ public class PlayerInteractor : MonoBehaviour
         {
             rb.useGravity = true;
             rb.isKinematic = false;
-
-            // optional gentle push forward
-            rb.AddForce(Camera.main.transform.forward * 2f, ForceMode.Impulse);
         }
 
-        Debug.Log($"Dropped object: {heldObject.name}");
         heldObject = null;
     }
 
     // ------------------------------------------------------------
-    // Object movement while held
+    // HELD OBJECT MOVEMENT
     // ------------------------------------------------------------
     void HandleHeldObject()
     {
@@ -200,17 +196,5 @@ public class PlayerInteractor : MonoBehaviour
             holdPoint.rotation,
             moveSpeed * Time.deltaTime
         );
-    }
-
-    // ------------------------------------------------------------
-    // Crosshair update
-    // ------------------------------------------------------------
-    void UpdateCrosshair(bool isHovering, bool isBox)
-    {
-        if (crosshairImage == null) return;
-        if (!isHovering)
-            crosshairImage.color = normalColor;
-        else
-            crosshairImage.color = isBox ? boxHoverColor : hoverColor;
     }
 }

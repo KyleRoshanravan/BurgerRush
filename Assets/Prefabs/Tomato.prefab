@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 6903431103620984229}
   - component: {fileID: 7831328879123173067}
   - component: {fileID: -6298508181428923179}
+  - component: {fileID: 93180494614257824}
   m_Layer: 0
   m_Name: Tomato
   m_TagString: Pickable
@@ -139,3 +140,16 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.2, y: 0.005, z: 0.2}
   m_Center: {x: 0, y: 0.0025, z: 0}
+--- !u!114 &93180494614257824
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1641202308347229718}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8d34e424351299740bc68d795097e767, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::IngredientType
+  isTopBun: 0
