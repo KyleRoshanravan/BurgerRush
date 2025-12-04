@@ -33,6 +33,7 @@ public class PlayerInteractor : MonoBehaviour
         HandleHover();
         HandleClick();
         HandleHeldObject();
+        HandleFinalizeBurger(); // NEW — press E to finalize
     }
 
     // ------------------------------------------------------------
@@ -128,7 +129,6 @@ public class PlayerInteractor : MonoBehaviour
     // ------------------------------------------------------------
     public void AutoPickUp(GameObject obj)
     {
-        // NEW — detach from plate if needed
         PlateAssembler plate = obj.GetComponentInParent<PlateAssembler>();
         if (plate != null)
             plate.DetachIngredient(obj);
@@ -147,7 +147,6 @@ public class PlayerInteractor : MonoBehaviour
 
     void PickUpObject(GameObject obj)
     {
-        // NEW — detach from plate if needed
         PlateAssembler plate = obj.GetComponentInParent<PlateAssembler>();
         if (plate != null)
             plate.DetachIngredient(obj);
@@ -196,5 +195,24 @@ public class PlayerInteractor : MonoBehaviour
             holdPoint.rotation,
             moveSpeed * Time.deltaTime
         );
+    }
+
+    // ------------------------------------------------------------
+    // FINALIZE BURGER (Press E)
+    // ------------------------------------------------------------
+    void HandleFinalizeBurger()
+    {
+        if (!Input.GetKeyDown(KeyCode.E))
+            return;
+
+        if (hoveredObject != null)
+        {
+            PlateAssembler plate = hoveredObject.GetComponent<PlateAssembler>();
+            if (plate != null)
+            {
+                plate.FinalizeBurger();
+                Debug.Log("Burger finalized!");
+            }
+        }
     }
 }

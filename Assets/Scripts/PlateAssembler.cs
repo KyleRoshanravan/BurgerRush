@@ -7,7 +7,11 @@ public class PlateAssembler : MonoBehaviour
     public Transform plateCenter;        // Empty child at plate center
     public float stackSpacing = 0.01f;   // Extra space between items
 
+    [Header("Finalization")]
+    public GameObject burgerBoxPrefab;   // Prefab to spawn when burger is finalized
+
     private List<GameObject> stackedIngredients = new List<GameObject>();
+    public List<BurgerData> finalizedBurgerData = new List<BurgerData>();
 
     // ----------------------------------------------------------
     // PLACE INGREDIENT
@@ -19,7 +23,7 @@ public class PlateAssembler : MonoBehaviour
         IngredientType type = ingredient.GetComponent<IngredientType>();
         if (type == null) return;
 
-        // BLOCK adding ingredients if top bun already exists
+        // Block adding ingredients if top bun exists
         if (HasTopBun() && !type.isTopBun)
             return;
 
@@ -49,7 +53,7 @@ public class PlateAssembler : MonoBehaviour
         // Add to stack
         stackedIngredients.Add(ingredient);
 
-        // Reposition the whole stack
+        // Reposition the stack
         RepositionStack();
     }
 
@@ -80,50 +84,32 @@ public class PlateAssembler : MonoBehaviour
     private void RepositionStack()
     {
         float currentHeight = 0f;
-
-        // Clean list
         stackedIngredients.RemoveAll(item => item == null);
 
         foreach (var item in stackedIngredients)
         {
             IngredientType type = item.GetComponent<IngredientType>();
+            Vector3 posOffset = Vector3.zero;
 
-            if (type != null && type.isTopBun)
+            // Use placementPoint for top or bottom bun if available
+            if (type != null && type.placementPoint != null)
             {
-                if (type.placementPoint != null)
-                {
-                    // WORLD-SPACE OFFSET from placementPoint to object origin
-                    Vector3 offset = item.transform.position - type.placementPoint.position;
-
-                    // place so placementPoint sits on current stack height
-                    item.transform.position = plateCenter.position + new Vector3(0f, currentHeight, 0f) + offset;
-                }
-                else
-                {
-                    // fallback
-                    float h = GetObjectHeight(item);
-                    item.transform.position = plateCenter.position + new Vector3(0f, currentHeight, 0f);
-                    currentHeight += h + stackSpacing;
-                }
-
-                item.transform.rotation = Quaternion.identity;
-
-                // top bun is final ingredient
-                return;
+                posOffset = item.transform.position - type.placementPoint.position;
             }
 
-            // normal ingredient
-            float height = GetObjectHeight(item);
-            item.transform.position = plateCenter.position + new Vector3(0f, currentHeight, 0f);
+            item.transform.position = plateCenter.position + new Vector3(0f, currentHeight, 0f) + posOffset;
             item.transform.rotation = Quaternion.identity;
 
-            currentHeight += height + stackSpacing;
+            float itemHeight = GetObjectHeight(item);
+
+            // Top bun is always the final ingredient
+            if (type != null && type.isTopBun)
+                return;
+
+            currentHeight += itemHeight + stackSpacing;
         }
     }
 
-    // ----------------------------------------------------------
-    // HELPERS
-    // ----------------------------------------------------------
     private float GetObjectHeight(GameObject obj)
     {
         if (obj == null) return 0.1f;
@@ -137,8 +123,55 @@ public class PlateAssembler : MonoBehaviour
         foreach (var item in stackedIngredients)
             if (item.GetComponent<IngredientType>()?.isTopBun == true)
                 return true;
-
         return false;
+    }
+
+    // ----------------------------------------------------------
+    // FINALIZE BURGER
+    // ----------------------------------------------------------
+    public void FinalizeBurger()
+    {
+        if (stackedIngredients.Count == 0) return;
+
+        // Store burger data
+        finalizedBurgerData.Clear();
+
+        foreach (var item in stackedIngredients)
+        {
+            if (item == null) continue;
+
+            IngredientType type = item.GetComponent<IngredientType>();
+            BurgerData data = new BurgerData
+            {
+                ingredientName = item.name,
+                isTopBun = type?.isTopBun ?? false,
+                isBottomBun = type?.placementPoint != null && !type.isTopBun
+            };
+
+            // Handle patty
+            PattyCooking patty = item.GetComponent<PattyCooking>();
+            if (patty != null)
+            {
+                data.isPatty = true;
+                data.pattyState = patty.currentState.ToString();
+            }
+
+            finalizedBurgerData.Add(data);
+        }
+
+        // Spawn box prefab
+        if (burgerBoxPrefab != null)
+            Instantiate(burgerBoxPrefab, plateCenter.position, Quaternion.identity);
+
+        // Clean up ingredients
+        foreach (var item in stackedIngredients)
+            if (item != null)
+                Destroy(item);
+
+        stackedIngredients.Clear();
+
+        // Disable plate to prevent further editing
+        this.enabled = false;
     }
 
     // Optional alias

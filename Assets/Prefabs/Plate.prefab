@@ -186,3 +186,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlateAssembler
   plateCenter: {fileID: 3428865485702304817}
   stackSpacing: 0.01
+  burgerBoxPrefab: {fileID: 8815978900550120315, guid: f15bd4e0f1d4f6241b388d5a5a434c64, type: 3}
+  finalizedBurgerData: []
