@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 6963495404064684106}
   - component: {fileID: 7829860042227993845}
   - component: {fileID: -7935475798329880411}
+  - component: {fileID: -4980824717922968899}
   m_Layer: 0
   m_Name: Patty (Cooked)
   m_TagString: Pickable
@@ -139,3 +140,16 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.25, y: 0.01, z: 0.25}
   m_Center: {x: 0, y: 0.005, z: 0}
+--- !u!114 &-4980824717922968899
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3987414054917777226}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8d34e424351299740bc68d795097e767, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::IngredientType
+  isTopBun: 0

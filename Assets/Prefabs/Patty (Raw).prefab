@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: -4937061990674999996}
   - component: {fileID: -7125447183468466335}
   - component: {fileID: -8516187651685094141}
+  - component: {fileID: -8911157136035268208}
   m_Layer: 0
   m_Name: Patty (Raw)
   m_TagString: Pickable
@@ -159,3 +160,16 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 2, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &-8911157136035268208
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4456727253800175750}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8d34e424351299740bc68d795097e767, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::IngredientType
+  isTopBun: 0

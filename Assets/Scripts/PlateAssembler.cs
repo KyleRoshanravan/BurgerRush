@@ -16,19 +16,26 @@ public class PlateAssembler : MonoBehaviour
     {
         if (ingredient == null) return;
 
-        // If ingredient already belongs to this stack, ensure no duplicate
+        IngredientType type = ingredient.GetComponent<IngredientType>();
+        if (type == null) return;
+
+        // BLOCK adding ingredients if top bun already exists
+        if (HasTopBun() && !type.isTopBun)
+            return;
+
+        // Avoid duplicates
         if (stackedIngredients.Contains(ingredient))
         {
-            RepositionStack(); // just to be safe
+            RepositionStack();
             return;
         }
 
-        // If it belonged to another plate, detach from that first (defensive)
+        // Detach from any other plate
         PlateAssembler otherPlate = ingredient.GetComponentInParent<PlateAssembler>();
         if (otherPlate != null && otherPlate != this)
             otherPlate.DetachIngredient(ingredient);
 
-        // Freeze physics before placing
+        // Freeze physics
         Rigidbody rb = ingredient.GetComponent<Rigidbody>();
         if (rb != null)
         {
@@ -39,25 +46,22 @@ public class PlateAssembler : MonoBehaviour
         // Parent to this plate
         ingredient.transform.SetParent(transform);
 
-        // Add to list
+        // Add to stack
         stackedIngredients.Add(ingredient);
 
-        // Recalculate positions for the whole stack
+        // Reposition the whole stack
         RepositionStack();
     }
 
     // ----------------------------------------------------------
-    // DETACH / REMOVE AN INGREDIENT (called by PlayerInteractor)
+    // DETACH INGREDIENT
     // ----------------------------------------------------------
     public void DetachIngredient(GameObject ingredient)
     {
         if (ingredient == null) return;
 
-        // If the ingredient is in our list, remove it
-        if (stackedIngredients.Contains(ingredient))
-            stackedIngredients.Remove(ingredient);
+        stackedIngredients.Remove(ingredient);
 
-        // Restore physics on the ingredient
         Rigidbody rb = ingredient.GetComponent<Rigidbody>();
         if (rb != null)
         {
@@ -65,41 +69,56 @@ public class PlateAssembler : MonoBehaviour
             rb.useGravity = true;
         }
 
-        // Un-parent so it no longer moves with the plate
         ingredient.transform.SetParent(null);
 
-        // Reposition remaining items so there are no gaps
         RepositionStack();
     }
 
     // ----------------------------------------------------------
-    // REPOSITION (restack) - ensure stacked items sit flush with no gaps
+    // REPOSITION STACK
     // ----------------------------------------------------------
     private void RepositionStack()
     {
         float currentHeight = 0f;
 
-        // Clean the list of any null entries (destroyed objects)
+        // Clean list
         stackedIngredients.RemoveAll(item => item == null);
 
-        for (int i = 0; i < stackedIngredients.Count; i++)
+        foreach (var item in stackedIngredients)
         {
-            GameObject item = stackedIngredients[i];
-            if (item == null) continue;
+            IngredientType type = item.GetComponent<IngredientType>();
 
-            float itemHeight = GetObjectHeight(item);
+            if (type != null && type.isTopBun)
+            {
+                if (type.placementPoint != null)
+                {
+                    // WORLD-SPACE OFFSET from placementPoint to object origin
+                    Vector3 offset = item.transform.position - type.placementPoint.position;
 
+                    // place so placementPoint sits on current stack height
+                    item.transform.position = plateCenter.position + new Vector3(0f, currentHeight, 0f) + offset;
+                }
+                else
+                {
+                    // fallback
+                    float h = GetObjectHeight(item);
+                    item.transform.position = plateCenter.position + new Vector3(0f, currentHeight, 0f);
+                    currentHeight += h + stackSpacing;
+                }
+
+                item.transform.rotation = Quaternion.identity;
+
+                // top bun is final ingredient
+                return;
+            }
+
+            // normal ingredient
+            float height = GetObjectHeight(item);
             item.transform.position = plateCenter.position + new Vector3(0f, currentHeight, 0f);
             item.transform.rotation = Quaternion.identity;
 
-            currentHeight += itemHeight + stackSpacing;
+            currentHeight += height + stackSpacing;
         }
-    }
-
-    // Alias kept for older code that might call "Restack" or "Reposition"
-    public void RestackIngredients()
-    {
-        RepositionStack();
     }
 
     // ----------------------------------------------------------
@@ -109,7 +128,22 @@ public class PlateAssembler : MonoBehaviour
     {
         if (obj == null) return 0.1f;
         Renderer rend = obj.GetComponentInChildren<Renderer>();
-        if (rend == null) return 0.1f; // fallback
+        if (rend == null) return 0.1f;
         return rend.bounds.size.y;
+    }
+
+    private bool HasTopBun()
+    {
+        foreach (var item in stackedIngredients)
+            if (item.GetComponent<IngredientType>()?.isTopBun == true)
+                return true;
+
+        return false;
+    }
+
+    // Optional alias
+    public void RestackIngredients()
+    {
+        RepositionStack();
     }
 }

@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 7781012011802879509}
   - component: {fileID: 191986441327119600}
   - component: {fileID: 4424198640681836854}
+  - component: {fileID: -3171235594856274508}
   m_Layer: 0
   m_Name: Onion
   m_TagString: Pickable
@@ -139,3 +140,16 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.15, y: 0.004, z: 0.15}
   m_Center: {x: 0, y: 0.002, z: 0}
+--- !u!114 &-3171235594856274508
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4474529339508961032}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8d34e424351299740bc68d795097e767, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::IngredientType
+  isTopBun: 0

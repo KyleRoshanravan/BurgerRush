@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 7707400726771221772}
   - component: {fileID: -459803010563184174}
   - component: {fileID: 6732329810839143960}
+  - component: {fileID: 8482532491849020763}
   m_Layer: 0
   m_Name: Pickle
   m_TagString: Pickable
@@ -139,3 +140,16 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 2, z: 1}
   m_Center: {x: 0, y: 0.002, z: 0}
+--- !u!114 &8482532491849020763
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4700979041007458476}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8d34e424351299740bc68d795097e767, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::IngredientType
+  isTopBun: 0
