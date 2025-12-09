@@ -393,6 +393,7 @@ GameObject:
   - component: {fileID: 6252356961376966267}
   - component: {fileID: 6252356961367914557}
   - component: {fileID: 2891276109464158342}
+  - component: {fileID: 1976495939754875061}
   m_Layer: 0
   m_Name: TT_demo_female
   m_TagString: Untagged
@@ -488,6 +489,19 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &1976495939754875061
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6252356961377389083}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0e275e0b00eb1d6498033c41124b25cb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CustomerAI
+  counterPoint: {fileID: 0}
 --- !u!1 &6252356961377389087
 GameObject:
   m_ObjectHideFlags: 0
