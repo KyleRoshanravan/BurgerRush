@@ -2,9 +2,14 @@ using UnityEngine;
 
 public class CustomerSpawner : MonoBehaviour
 {
-    public GameObject[] customerPrefabs; // Assign prefabs in inspector
-    public Transform[] spawnPoints;      // Points in scene where customers appear
-    public float spawnInterval = 3f;     // Time between spawns
+    public GameObject[] customerPrefabs;
+    public Transform[] spawnPoints;
+    public float spawnInterval = 5f;
+
+    public Transform counterPoint;         // Scene CounterPoint
+    public TicketSpawner ticketSpawner;    // Reference to TicketSpawner
+    public GameObject ticketPrefab;        // Ticket prefab
+    public Sprite burgerSprite;            // Optional burger icon
 
     private void Start()
     {
@@ -16,6 +21,14 @@ public class CustomerSpawner : MonoBehaviour
         int prefabIndex = Random.Range(0, customerPrefabs.Length);
         int spawnIndex = Random.Range(0, spawnPoints.Length);
 
-        Instantiate(customerPrefabs[prefabIndex], spawnPoints[spawnIndex].position, Quaternion.identity);
+        // Instantiate customer prefab at spawn point
+        GameObject newCustomer = Instantiate(customerPrefabs[prefabIndex], spawnPoints[spawnIndex].position, Quaternion.identity);
+
+        // Assign runtime references (scene objects) to the customer AI
+        CustomerAI ai = newCustomer.GetComponent<CustomerAI>();
+        ai.counterPoint = counterPoint;
+        ai.ticketSpawner = ticketSpawner;
+        ai.ticketPrefab = ticketPrefab;
+        ai.burgerSprite = burgerSprite;
     }
 }

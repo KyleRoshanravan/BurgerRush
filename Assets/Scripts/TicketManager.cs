@@ -1,35 +1,49 @@
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 
 public class TicketManager : MonoBehaviour
 {
-    public GameObject ticketPrefab;        // Prefab of a single ticket
-    public Transform ticketPanelParent;    // Parent container (TicketPanel)
+    public int maxTickets = 3;
+    public TextMeshProUGUI moneyText;
 
     private List<TicketUI> activeTickets = new List<TicketUI>();
+    private int totalMoney = 0;
 
-    public void CreateNewTicket(string customerName, List<Sprite> ingredientIcons, float timeLimit, int payment)
+    public int ActiveTicketCount => activeTickets.Count;
+
+    public void RegisterTicket(TicketUI ticket)
     {
-        GameObject newTicketObj = Instantiate(ticketPrefab, ticketPanelParent);
-        TicketUI ticketUI = newTicketObj.GetComponent<TicketUI>();
+        activeTickets.Add(ticket);
+    }
 
-        if (ticketUI != null)
+    public void ExpireTicket(TicketUI ticket)
+    {
+        if (ticket != null)
         {
-            ticketUI.SetupTicket(customerName, ingredientIcons, timeLimit, payment);
-            activeTickets.Add(ticketUI);
+            totalMoney -= 5; // penalty
+            moneyText.text = "$" + totalMoney;
+            activeTickets.Remove(ticket);
+            Destroy(ticket.gameObject);
         }
     }
 
-    void Update()
+    public void CompleteOrder(TicketUI ticket, List<string> playerIngredients, Sprite burgerSprite = null)
     {
-        // Remove completed/expired tickets automatically
-        for (int i = activeTickets.Count - 1; i >= 0; i--)
-        {
-            if (activeTickets[i].IsExpired)
-            {
-                Destroy(activeTickets[i].gameObject);
-                activeTickets.RemoveAt(i);
-            }
-        }
+        if (ticket == null) return;
+
+        int mistakes = 0;
+        foreach (var ing in ticket.ingredients)
+            if (!playerIngredients.Contains(ing)) mistakes++;
+        foreach (var ing in playerIngredients)
+            if (!ticket.ingredients.Contains(ing)) mistakes++;
+
+        int moneyChange = 15 - (mistakes * 5);
+        totalMoney += moneyChange;
+        moneyText.text = "$" + totalMoney;
+
+        ticket.MarkCompleted();
+        activeTickets.Remove(ticket);
+        Destroy(ticket.gameObject, 2f); // show for 2 seconds
     }
 }
