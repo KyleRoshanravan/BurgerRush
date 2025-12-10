@@ -10,6 +10,16 @@ public class TicketManager : MonoBehaviour
     private List<TicketUI> activeTickets = new List<TicketUI>();
     private int totalMoney = 0;
 
+    // Added property to read current money
+    public int TotalMoney => totalMoney;
+
+    // Added method to deduct money
+    public void DeductMoney(int amount)
+    {
+        totalMoney -= amount;
+        moneyText.text = "$" + totalMoney;
+    }
+
     public int ActiveTicketCount => activeTickets.Count;
 
     public void RegisterTicket(TicketUI ticket)

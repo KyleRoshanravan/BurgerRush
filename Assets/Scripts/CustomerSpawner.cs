@@ -26,7 +26,7 @@ public class CustomerSpawner : MonoBehaviour
 
         // Assign runtime references (scene objects) to the customer AI
         CustomerAI ai = newCustomer.GetComponent<CustomerAI>();
-        ai.counterPoint = counterPoint;
+        ai.counterPoint = CustomerOrderPoint.Instance.GetRandomPoint();
         ai.ticketSpawner = ticketSpawner;
         ai.ticketPrefab = ticketPrefab;
         ai.burgerSprite = burgerSprite;
