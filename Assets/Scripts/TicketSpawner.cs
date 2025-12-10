@@ -37,37 +37,39 @@ public class TicketSpawner : MonoBehaviour
 
     public void SpawnTicketForCustomer(string customerName, Transform customerTransform)
     {
-        if (ticketManager == null) return;
-        if (ticketManager.ActiveTicketCount >= maxTickets) return;
+    if (ticketManager == null) return;
+    if (ticketManager.ActiveTicketCount >= maxTickets) return;
 
-        GameObject ticketObj = Instantiate(ticketPrefab, customerTransform.position + Vector3.up * 2f, Quaternion.identity);
-        ticketObj.transform.SetParent(customerTransform);
-        TicketUI ticketUI = ticketObj.GetComponent<TicketUI>();
+    // -------- FIXED TICKET SPAWN HERE --------
+    GameObject ticketObj = Instantiate(ticketPrefab);
+    ticketObj.transform.SetParent(customerTransform);
+    ticketObj.transform.localPosition = new Vector3(0, 2f, 0);
+    ticketObj.transform.localRotation = Quaternion.identity;
+    // ------------------------------------------
 
-        // Fixed ingredients
-        List<string> ingredients = new List<string> { "Top Bun", "Patty", "Bottom Bun" };
+    TicketUI ticketUI = ticketObj.GetComponent<TicketUI>();
 
-        // Random extras
-        string[] extras = { "Cheese", "Lettuce", "Tomato", "Pickle", "Onion" };
-        int extraCount = Random.Range(0, extras.Length + 1);
-        List<string> chosenExtras = new List<string>();
-        while (chosenExtras.Count < extraCount)
-        {
-            string pick = extras[Random.Range(0, extras.Length)];
-            if (!chosenExtras.Contains(pick))
-                chosenExtras.Add(pick);
-        }
-        ingredients.AddRange(chosenExtras);
+    // Fixed ingredients
+    List<string> ingredients = new List<string> { "Top Bun", "Patty", "Bottom Bun" };
 
-        // ★ Calculate burger price
-        float ingredientCost = CalculateBurgerCost(ingredients);
-        int payout = Mathf.RoundToInt(ingredientCost * 4f);   // ★ 4× markup
-
-        float timeLimit = Random.Range(20f, 40f);
-
-        // ★ Use dynamic payout
-        ticketUI.SetupTicket(customerName, ingredients, timeLimit, payout, burgerSprite);
-
-        ticketManager.RegisterTicket(ticketUI);
+    // Random extras
+    string[] extras = { "Cheese", "Lettuce", "Tomato", "Pickle", "Onion" };
+    int extraCount = Random.Range(0, extras.Length + 1);
+    List<string> chosenExtras = new List<string>();
+    while (chosenExtras.Count < extraCount)
+    {
+        string pick = extras[Random.Range(0, extras.Length)];
+        if (!chosenExtras.Contains(pick))
+            chosenExtras.Add(pick);
     }
+    ingredients.AddRange(chosenExtras);
+
+    float ingredientCost = CalculateBurgerCost(ingredients);
+    int payout = Mathf.RoundToInt(ingredientCost * 4f);
+    float timeLimit = Random.Range(20f, 40f);
+
+    ticketUI.SetupTicket(customerName, ingredients, timeLimit, payout, burgerSprite);
+    ticketManager.RegisterTicket(ticketUI);
+    }
+
 }
