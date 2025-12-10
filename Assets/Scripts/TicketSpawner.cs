@@ -66,7 +66,7 @@ public class TicketSpawner : MonoBehaviour
 
     float ingredientCost = CalculateBurgerCost(ingredients);
     int payout = Mathf.RoundToInt(ingredientCost * 4f);
-    float timeLimit = Random.Range(20f, 40f);
+    float timeLimit = Random.Range(20f, 30f);
 
     ticketUI.SetupTicket(customerName, ingredients, timeLimit, payout, burgerSprite);
     ticketManager.RegisterTicket(ticketUI);

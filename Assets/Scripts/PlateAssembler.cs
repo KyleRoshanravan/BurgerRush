@@ -129,50 +129,101 @@ public class PlateAssembler : MonoBehaviour
     // ----------------------------------------------------------
     // FINALIZE BURGER
     // ----------------------------------------------------------
-    public void FinalizeBurger()
+    // public void FinalizeBurger()
+    // {
+    //     if (stackedIngredients.Count == 0) return;
+
+    //     // Store burger data
+    //     finalizedBurgerData.Clear();
+
+    //     foreach (var item in stackedIngredients)
+    //     {
+    //         if (item == null) continue;
+
+    //         IngredientType type = item.GetComponent<IngredientType>();
+    //         BurgerData data = new BurgerData
+    //         {
+    //             ingredientName = item.name,
+    //             isTopBun = type?.isTopBun ?? false,
+    //             isBottomBun = type?.placementPoint != null && !type.isTopBun
+    //         };
+
+    //         // Handle patty
+    //         PattyCooking patty = item.GetComponent<PattyCooking>();
+    //         if (patty != null)
+    //         {
+    //             data.isPatty = true;
+    //             data.pattyState = patty.currentState.ToString();
+    //         }
+
+    //         finalizedBurgerData.Add(data);
+    //     }
+
+    //     // Spawn box prefab
+    //     if (burgerBoxPrefab != null)
+    //         Instantiate(burgerBoxPrefab, plateCenter.position, Quaternion.identity);
+
+    //     // Clean up ingredients
+    //     foreach (var item in stackedIngredients)
+    //         if (item != null)
+    //             Destroy(item);
+
+    //     stackedIngredients.Clear();
+
+    //     // Disable plate to prevent further editing
+    //     this.enabled = false;
+    // }
+
+    public GameObject FinalizeBurger()
+{
+    if (stackedIngredients.Count == 0) return null;
+
+    // Build burger data
+    finalizedBurgerData.Clear();
+    foreach (var item in stackedIngredients)
     {
-        if (stackedIngredients.Count == 0) return;
+        if (item == null) continue;
 
-        // Store burger data
-        finalizedBurgerData.Clear();
-
-        foreach (var item in stackedIngredients)
+        IngredientType type = item.GetComponent<IngredientType>();
+        BurgerData data = new BurgerData
         {
-            if (item == null) continue;
+            ingredientName = item.name,
+            isTopBun = type?.isTopBun ?? false,
+            isBottomBun = type?.placementPoint != null && !type.isTopBun
+        };
 
-            IngredientType type = item.GetComponent<IngredientType>();
-            BurgerData data = new BurgerData
-            {
-                ingredientName = item.name,
-                isTopBun = type?.isTopBun ?? false,
-                isBottomBun = type?.placementPoint != null && !type.isTopBun
-            };
-
-            // Handle patty
-            PattyCooking patty = item.GetComponent<PattyCooking>();
-            if (patty != null)
-            {
-                data.isPatty = true;
-                data.pattyState = patty.currentState.ToString();
-            }
-
-            finalizedBurgerData.Add(data);
+        PattyCooking patty = item.GetComponent<PattyCooking>();
+        if (patty != null)
+        {
+            data.isPatty = true;
+            data.pattyState = patty.currentState.ToString();
         }
 
-        // Spawn box prefab
-        if (burgerBoxPrefab != null)
-            Instantiate(burgerBoxPrefab, plateCenter.position, Quaternion.identity);
-
-        // Clean up ingredients
-        foreach (var item in stackedIngredients)
-            if (item != null)
-                Destroy(item);
-
-        stackedIngredients.Clear();
-
-        // Disable plate to prevent further editing
-        this.enabled = false;
+        finalizedBurgerData.Add(data);
     }
+
+    // Spawn box
+    GameObject box = null;
+    if (burgerBoxPrefab != null)
+    {
+        box = Instantiate(burgerBoxPrefab, plateCenter.position, Quaternion.identity);
+        BurgerBox boxScript = box.GetComponent<BurgerBox>();
+        if (boxScript != null)
+            boxScript.LoadBurger(finalizedBurgerData);
+    }
+
+    // Destroy ingredients and plate
+    foreach (var item in stackedIngredients)
+        if (item != null)
+            Destroy(item);
+
+    stackedIngredients.Clear();
+    Destroy(gameObject);
+
+    return box; // Return the spawned box
+}
+
+
 
     // Optional alias
     public void RestackIngredients()

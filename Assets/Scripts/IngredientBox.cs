@@ -120,14 +120,13 @@ public class IngredientBox : MonoBehaviour
             return;
         }
 
-        //Check money
-        if(!playerData.TrySpend(cost))
+        // Check money
+        if (!playerData.TrySpend(cost))
         {
             Debug.Log("Player can't afford this ingredient!");
             return;
         }
 
-        //Player paid; spawn the ingredient
         StartCoroutine(SpawnAndGive(interactor));
     }
 

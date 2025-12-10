@@ -1,11 +1,18 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using UnityEngine.InputSystem; // Important for new Input System
+using UnityEngine.InputSystem; // For new Input System
 
 public class PauseMenuController : MonoBehaviour
 {
     public GameObject pauseMenu;
     private bool isPaused = false;
+
+    void Start()
+    {
+        // Ensure the pause menu is hidden at game start
+        if (pauseMenu != null)
+            pauseMenu.SetActive(false);
+    }
 
     void Update()
     {
@@ -20,14 +27,18 @@ public class PauseMenuController : MonoBehaviour
 
     public void PauseGame()
     {
-        pauseMenu.SetActive(true);
+        if (pauseMenu != null)
+            pauseMenu.SetActive(true);
+
         Time.timeScale = 0f;
         isPaused = true;
     }
 
     public void ResumeGame()
     {
-        pauseMenu.SetActive(false);
+        if (pauseMenu != null)
+            pauseMenu.SetActive(false);
+
         Time.timeScale = 1f;
         isPaused = false;
     }

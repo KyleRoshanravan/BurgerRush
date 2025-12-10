@@ -1,6 +1,9 @@
 using UnityEngine;
 using UnityEngine.UI;
 
+using System.Linq;
+
+
 public class PlayerInteractor : MonoBehaviour
 {
     [Header("Interaction Settings")]
@@ -33,6 +36,8 @@ public class PlayerInteractor : MonoBehaviour
         HandleHover();
         HandleClick();
         HandleHeldObject();
+        HandleServePositive();
+        HandleServeNegative();
         HandleFinalizeBurger(); // NEW — press E to finalize
     }
 
@@ -198,21 +203,113 @@ public class PlayerInteractor : MonoBehaviour
     }
 
     // ------------------------------------------------------------
-    // FINALIZE BURGER (Press E)
+    // POSITIVE OUTCOME - Q
     // ------------------------------------------------------------
-    void HandleFinalizeBurger()
+    void HandleServePositive()
     {
-        if (!Input.GetKeyDown(KeyCode.E))
+        if (!Input.GetKeyDown(KeyCode.Q)) 
             return;
 
-        if (hoveredObject != null)
+        if (!HandleBurgerBox()) 
+            return;
+
+        // Positive payout
+        int randomPayout = Random.Range(4, 10); // higher payout
+        GiveMoneyAndStar(randomPayout, true);
+    }
+
+    // ------------------------------------------------------------
+    // NEGATIVE OUTCOME - Z
+    // ------------------------------------------------------------
+    void HandleServeNegative()
+    {
+        if (!Input.GetKeyDown(KeyCode.Z)) 
+            return;
+
+        if (!HandleBurgerBox()) 
+            return;
+
+        // Negative payout
+        int randomPayout = Random.Range(1, 6); // smaller payout
+        GiveMoneyAndStar(randomPayout, false);
+    }
+
+    // ------------------------------------------------------------
+    // HELPER - Check held burger box and remove it
+    // ------------------------------------------------------------
+    bool HandleBurgerBox()
+    {
+        if (heldObject == null) 
+            return false;
+
+        BurgerBox box = heldObject.GetComponent<BurgerBox>();
+        if (box == null) 
+            return false;
+
+        // Destroy held burger box
+        Destroy(heldObject);
+        heldObject = null;
+
+        // Destroy the first spawned customer
+        Customer firstCustomer = FindObjectsOfType<Customer>().OrderBy(c => c.GetInstanceID()).FirstOrDefault();
+        if (firstCustomer != null)
+            Destroy(firstCustomer.gameObject);
+
+        return true;
+    }
+
+    // ------------------------------------------------------------
+    // HELPER - Give money and update stars
+    // ------------------------------------------------------------
+    void GiveMoneyAndStar(int payout, bool positive)
+    {
+        PlayerData player = GetComponent<PlayerData>();
+        if (player != null)
         {
-            PlateAssembler plate = hoveredObject.GetComponent<PlateAssembler>();
-            if (plate != null)
+            if (positive)
             {
-                plate.FinalizeBurger();
-                Debug.Log("Burger finalized!");
+                player.AddMoney(payout);
+                player.AddStar();
+                Debug.Log($"Positive outcome! Earned ${payout}, gained a star.");
+            }
+            else
+            {
+                player.AddMoney(payout); // subtract money
+                player.RemoveStar();
+                Debug.Log($"Negative outcome! Ear ${payout}, lost a star.");
             }
         }
     }
+
+
+
+    // ------------------------------------------------------------
+    // FINALIZE BURGER (Press E)
+    // ------------------------------------------------------------
+    // ------------------------------------------------------------
+// FINALIZE BURGER (Press E) - GIVE RANDOM MONEY TO PLAYER
+// ------------------------------------------------------------
+void HandleFinalizeBurger()
+{
+    if (!Input.GetKeyDown(KeyCode.E))
+        return;
+
+    if (hoveredObject != null)
+    {
+        PlateAssembler plate = hoveredObject.GetComponent<PlateAssembler>();
+        if (plate != null)
+        {
+            // Finalize burger and get the spawned box
+            GameObject box = plate.FinalizeBurger();
+            if (box != null)
+            {
+                // Auto pick it up
+                AutoPickUp(box);
+                Debug.Log("Picked up the burger box!");
+            }
+        }
+    }
+}
+
+
 }
