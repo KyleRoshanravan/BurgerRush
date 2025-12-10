@@ -4,9 +4,36 @@ using UnityEngine;
 public class TicketSpawner : MonoBehaviour
 {
     public TicketManager ticketManager;
-    public GameObject ticketPrefab;   // World-space ticket prefab
-    public Sprite burgerSprite;       // Icon for ticket
+    public GameObject ticketPrefab;
+    public Sprite burgerSprite;
     public int maxTickets = 3;
+
+    // ★ Ingredient price table
+    private Dictionary<string, float> ingredientPrices = new Dictionary<string, float>
+    {
+        { "Top Bun", 0.15f },
+        { "Bottom Bun", 0.15f },
+        { "Patty", 0.60f },
+        { "Cheese", 0.30f },
+        { "Lettuce", 0.15f },
+        { "Tomato", 0.20f },
+        { "Pickle", 0.10f },
+        { "Onion", 0.20f }
+    };
+
+    // ★ Calculate ingredient cost
+    private float CalculateBurgerCost(List<string> ingredients)
+    {
+        float total = 0f;
+
+        foreach (string ing in ingredients)
+        {
+            if (ingredientPrices.TryGetValue(ing, out float cost))
+                total += cost;
+        }
+
+        return total;
+    }
 
     public void SpawnTicketForCustomer(string customerName, Transform customerTransform)
     {
@@ -14,11 +41,13 @@ public class TicketSpawner : MonoBehaviour
         if (ticketManager.ActiveTicketCount >= maxTickets) return;
 
         GameObject ticketObj = Instantiate(ticketPrefab, customerTransform.position + Vector3.up * 2f, Quaternion.identity);
-        ticketObj.transform.SetParent(customerTransform); // follow customer
+        ticketObj.transform.SetParent(customerTransform);
         TicketUI ticketUI = ticketObj.GetComponent<TicketUI>();
 
-        // Random order
+        // Fixed ingredients
         List<string> ingredients = new List<string> { "Top Bun", "Patty", "Bottom Bun" };
+
+        // Random extras
         string[] extras = { "Cheese", "Lettuce", "Tomato", "Pickle", "Onion" };
         int extraCount = Random.Range(0, extras.Length + 1);
         List<string> chosenExtras = new List<string>();
@@ -30,8 +59,14 @@ public class TicketSpawner : MonoBehaviour
         }
         ingredients.AddRange(chosenExtras);
 
+        // ★ Calculate burger price
+        float ingredientCost = CalculateBurgerCost(ingredients);
+        int payout = Mathf.RoundToInt(ingredientCost * 4f);   // ★ 4× markup
+
         float timeLimit = Random.Range(20f, 40f);
-        ticketUI.SetupTicket(customerName, ingredients, timeLimit, 15, burgerSprite);
+
+        // ★ Use dynamic payout
+        ticketUI.SetupTicket(customerName, ingredients, timeLimit, payout, burgerSprite);
 
         ticketManager.RegisterTicket(ticketUI);
     }

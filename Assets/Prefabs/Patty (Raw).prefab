@@ -111,7 +111,7 @@ MonoBehaviour:
   rawMaterial: {fileID: 2100000, guid: c303abad823d84d6a844462a90f90fea, type: 2}
   cookingMaterial: {fileID: 2100000, guid: 5a3d5b531f25b6b4d85d678a0e2b5594, type: 2}
   cookedMaterial: {fileID: 2100000, guid: cee73ed16d7de42108059b4f3afd5b09, type: 2}
-  burntMaterial: {fileID: 2100000, guid: 6d417baf379b84e8e891191fe820ccae, type: 2}
+  burntMaterial: {fileID: 2100000, guid: fd1611da22eb0d94085f27574f2cf19d, type: 2}
 --- !u!54 &-7125447183468466335
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -173,3 +173,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::IngredientType
   isTopBun: 0
+  placementPoint: {fileID: 0}

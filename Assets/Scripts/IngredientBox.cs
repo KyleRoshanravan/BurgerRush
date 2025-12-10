@@ -10,6 +10,9 @@ public class IngredientBox : MonoBehaviour
     public float slideDistance = 0.3f;
     public float slideSpeed = 10f;
 
+    [Header("Economy Settings")]
+    public float cost = 0;
+
     [Header("Auto Label Settings")]
     public float labelHeightOffset = 0.6f;
     [Tooltip("Uniform local scale applied to the label GameObject")]
@@ -110,6 +113,21 @@ public class IngredientBox : MonoBehaviour
             return;
         }
 
+        PlayerData playerData = interactor.GetComponent<PlayerData>();
+        if(playerData == null)
+        {
+            Debug.LogWarning("Player has no Player Data.");
+            return;
+        }
+
+        //Check money
+        if(!playerData.TrySpend(cost))
+        {
+            Debug.Log("Player can't afford this ingredient!");
+            return;
+        }
+
+        //Player paid; spawn the ingredient
         StartCoroutine(SpawnAndGive(interactor));
     }
 
